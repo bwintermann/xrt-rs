@@ -27,6 +27,7 @@ pub enum Error {
     XclbinInvalidMagicString(String),
     XclbinByteReadingError(usize, usize), // Byte indices of start and end of given section
     XclbinNoBuildMetadataSection,
+    XclbinJSONParseError(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

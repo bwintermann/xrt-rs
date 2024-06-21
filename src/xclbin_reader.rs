@@ -1,10 +1,8 @@
 //! Module to read out relevant data from an xclbin file
 //! Can directly convert the information into actual XRT buffers
-use core::num;
-use std::os::linux::raw;
-
 use crate::Result;
 use crate::Error;
+use serde_json::Value;
 
 /// _Usage_: parse_data!(slice, target_type, range);
 /// 
@@ -62,8 +60,8 @@ fn get_section_data(data: &Vec<u8>) -> Result<Vec<SectionHeader>> {
 }
 
 
-/// Find out if a build metadata section exists, and if so, extract the JSON it contains as a string
-fn get_build_metadata_str(data: &Vec<u8>, headers: &Vec<SectionHeader>) -> Result<String> {
+/// Find out if a build metadata section exists, and if so, extract the JSON it contains
+fn get_build_metadata(data: &Vec<u8>, headers: &Vec<SectionHeader>) -> Result<serde_json::Value> {
     let matching = headers.iter().filter(|h| h.kind == 14).collect::<Vec<_>>();
     if matching.len() == 0 {
         return Err(Error::XclbinNoBuildMetadataSection);
@@ -72,6 +70,6 @@ fn get_build_metadata_str(data: &Vec<u8>, headers: &Vec<SectionHeader>) -> Resul
     // Better be explicit that have everything be a oneliner
     let offset = matching[0].offset as usize;
     let size = matching[0].size as usize;
-    let raw_json_string = std::str::from_utf8(&data[offset..offset+size]).expect("Parsing build metadata section").to_owned();
-    Ok(raw_json_string)
+    serde_json::from_slice::<serde_json::Value>(&data[offset..offset+size]).map_err(|e| Error::XclbinInvalidMagicString(e.to_string()))
 }
+
