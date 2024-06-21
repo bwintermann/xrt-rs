@@ -1,8 +1,12 @@
 //! Module to read out relevant data from an xclbin file
 //! Can directly convert the information into actual XRT buffers
+use std::collections::HashMap;
+
+use crate::buffer::XRTBuffer;
 use crate::Result;
 use crate::Error;
 use serde_json::Value;
+use crate::common::*;
 
 /// _Usage_: parse_data!(slice, target_type, range);
 /// 
@@ -47,7 +51,7 @@ fn get_section_data(data: &Vec<u8>) -> Result<Vec<SectionHeader>> {
     let num_sections: u32 = parse_data!(data, std::primitive::u32, 448..452);
     let mut headers: Vec<SectionHeader> = Vec::new();
     for section_index in 0..num_sections {
-        let s = 496 + (40 * section_index) as usize - 40;
+        let s = 496 + (40 * section_index) as usize - 40;       // 496 is the number of bytes of the AXLF header at the start of the file; 40 is the size of a section header struct in C
         headers.push(
             SectionHeader { 
                 kind: parse_data!(data, std::primitive::u32, s..s+4), 
@@ -67,9 +71,16 @@ fn get_build_metadata(data: &Vec<u8>, headers: &Vec<SectionHeader>) -> Result<se
         return Err(Error::XclbinNoBuildMetadataSection);
     }
 
-    // Better be explicit that have everything be a oneliner
+    // Better be explicit than have everything be a oneliner
     let offset = matching[0].offset as usize;
     let size = matching[0].size as usize;
     serde_json::from_slice::<serde_json::Value>(&data[offset..offset+size]).map_err(|e| Error::XclbinInvalidMagicString(e.to_string()))
 }
 
+
+/// Read the XCLBIN file and create buffers and scalar arguments accordingly. This produces an argumentMapping that
+/// a kernel can use to check whether its supplied arguments are correct. It also avoids having to ask the user what arguments
+/// are needed and of what type
+pub fn conjure_kernel_arguments(kernel_name: &str) -> Result<ArgumentMapping> {
+
+}

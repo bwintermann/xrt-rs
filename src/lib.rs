@@ -30,5 +30,5 @@ pub mod kernel;
 pub mod run;
 pub mod utils;
 pub mod xclbin_reader;
-
+pub mod common;
 pub use error::{Error, Result};

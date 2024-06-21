@@ -18,12 +18,12 @@ impl Into<xclBOSyncDirection> for SyncDirection {
     }
 }
 
-pub struct XRTBuffer {
+pub struct XRTBuffer<T> {
     pub(crate) handle: Option<xrtBufferHandle>,
     size: usize,
 }
 
-impl XRTBuffer {
+impl<T> XRTBuffer<T> {
     /// Create a new buffer. Buffers are bound to devices, but not to kernels. However if used for a kernel as an argument,
     /// the memory group must match. The memory group for a kernel arg can be retrieved via  kernel.get_memory_group_for_argument
     pub fn new(device: &XRTDevice, size: usize, flags: u32, memory_group: i32) -> Result<Self> {
@@ -48,7 +48,7 @@ impl XRTBuffer {
     }
 
     /// Sync the BO in the given direction. If size is given use that value, else synchronize the buffer
-    pub fn sync<T>(
+    pub fn sync(
         &self,
         sync_direction: SyncDirection,
         size: Option<usize>,
@@ -72,7 +72,7 @@ impl XRTBuffer {
     }
 
     /// Write the given datatype into the buffer. Buffer still needs to be synced for the data to show up on the FPGA
-    pub fn write<T>(&self, data: &[T], seek: usize) -> Result<()> {
+    pub fn write(&self, data: &[T], seek: usize) -> Result<()> {
         if let Some(handle) = self.handle {
             let ret_val = unsafe {
                 xrtBOWrite(
@@ -94,7 +94,7 @@ impl XRTBuffer {
     }
 
     /// Inplace reads value from BO into the provided slice
-    pub fn read<T>(&self, data: &mut [T], seek: usize) -> Result<()> {
+    pub fn read(&self, data: &mut [T], seek: usize) -> Result<()> {
         if let Some(handle) = self.handle {
             let ret_val = unsafe {
                 xrtBORead(
@@ -116,7 +116,7 @@ impl XRTBuffer {
     }
 }
 
-impl Drop for XRTBuffer {
+impl<T> Drop for XRTBuffer<T> {
     fn drop(&mut self) {
         if let Some(handle) = self.handle {
             unsafe {
