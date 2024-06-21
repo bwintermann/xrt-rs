@@ -29,5 +29,6 @@ pub mod ffi;
 pub mod kernel;
 pub mod run;
 pub mod utils;
+pub mod xclbin_reader;
 
 pub use error::{Error, Result};
